@@ -86,3 +86,60 @@ func TestShutdownWaitsThenClosed(t *testing.T) {
 		t.Fatal("Serve did not return")
 	}
 }
+
+func TestSSEStopsWhenClientCancels(t *testing.T) {
+	started := make(chan struct{})
+	finished := make(chan struct{})
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /events", func(w http.ResponseWriter, r *http.Request) {
+		flusher, ok := w.(http.Flusher)
+		if !ok {
+			http.Error(w, "no flush", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.Header().Set("Cache-Control", "no-cache")
+		_, _ = io.WriteString(w, "data: one\n\n")
+		flusher.Flush()
+		close(started)
+		<-r.Context().Done()
+		close(finished)
+	})
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv := &http.Server{Handler: mux}
+	go srv.Serve(ln)
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		_ = srv.Shutdown(ctx)
+	})
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://"+ln.Addr().String()+"/events", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+	buf := make([]byte, 32)
+	n, err := res.Body.Read(buf)
+	if n == 0 || err != nil && err != io.EOF {
+		t.Fatalf("read %d %v", n, err)
+	}
+	if string(buf[:n]) != "data: one\n\n" {
+		t.Fatalf("event %q", buf[:n])
+	}
+	cancel()
+	select {
+	case <-finished:
+	case <-time.After(2 * time.Second):
+		t.Fatal("handler kept running after the client canceled")
+	}
+}

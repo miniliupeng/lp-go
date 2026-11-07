@@ -60,3 +60,21 @@ func DeferOrder() (out []string) {
 	defer func() { out = append(out, "defer 2") }()
 	return out
 }
+
+// DeferArg 的参数在执行到 defer 这一行时求值。
+func DeferArg() (out []int) {
+	n := 1
+	defer func(v int) { out = append(out, v) }(n)
+	n = 2
+	return
+}
+
+// Recovered 在 defer 里直接调用 recover，并把命名返回值交给调用方。
+func Recovered() (msg string) {
+	defer func() {
+		if v := recover(); v != nil {
+			msg = fmt.Sprint(v)
+		}
+	}()
+	panic("boom")
+}

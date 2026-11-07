@@ -37,4 +37,11 @@ func TestDivSumClosureDefer(t *testing.T) {
 	if len(got) != 3 || got[0] != "body" || got[1] != "defer 2" || got[2] != "defer 1" {
 		t.Fatal(got)
 	}
+	arg := DeferArg()
+	if len(arg) != 1 || arg[0] != 1 {
+		t.Fatal(arg)
+	}
+	if Recovered() != "boom" {
+		t.Fatal(Recovered())
+	}
 }

@@ -37,6 +37,24 @@ func TestMapCommaOk(t *testing.T) {
 	}
 }
 
+func TestThreeIndexAndCopy(t *testing.T) {
+	base := []int{1, 2, 3, 4, 5}
+	view := base[1:3:4]
+	if len(view) != 2 || cap(view) != 3 || view[0] != 2 {
+		t.Fatalf("len=%d cap=%d %v", len(view), cap(view), view)
+	}
+	dst := make([]int, 2)
+	n := copy(dst, []int{9, 8, 7})
+	if n != 2 || dst[0] != 9 || dst[1] != 8 {
+		t.Fatalf("n=%d dst=%v", n, dst)
+	}
+	var nilSlice []int
+	nilSlice = append(nilSlice, 1)
+	if len(nilSlice) != 1 {
+		t.Fatal(nilSlice)
+	}
+}
+
 func TestPointer(t *testing.T) {
 	n := 10
 	p := &n
