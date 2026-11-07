@@ -1,0 +1,3 @@
+Go is simple.
+Go is practical.
+Practical tools matter.
