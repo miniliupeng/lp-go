@@ -139,9 +139,9 @@ go build -gcflags=-m -o /dev/null ./docs/go-tutorial/examples/partc/escape
 | `examples/partd/httpx` | 1.22+ 路由与超时字段的零值含义 |
 | `examples/partd/shutdown` | `Server.Shutdown` |
 | `examples/partd/sqltutorial` | 可运行的 `database/sql` 事务 |
-| `examples/partd/limit` | 令牌桶与 singleflight |
+| `examples/partd/limit` | 令牌桶、TTL/负缓存与 singleflight |
 | `examples/partd/breaker` | 熔断状态机 |
-| `examples/partd/obs` | JSON `slog` |
+| `examples/partd/obs` | JSON `slog` 与 `runtime/metrics` |
 | `examples/partd/shorturl` | 带过期时间的短链 |
 
 ## 不在默认实现里的东西

@@ -15,6 +15,7 @@ func TestNonEmptyLines(t *testing.T) {
 		{name: "empty", in: "", want: nil},
 		{name: "blanks", in: " \n\t\n", want: nil},
 		{name: "trim", in: " a \n\n b \n", want: []string{"a", "b"}},
+		{name: "crlf", in: "a\r\n b", want: []string{"a", "b"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

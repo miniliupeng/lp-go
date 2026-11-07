@@ -20,6 +20,12 @@ func TestJSONLogHasLevelAndMessage(t *testing.T) {
 	if strings.Contains(text, "hidden") {
 		t.Fatalf("debug leaked: %s", text)
 	}
+	if logger.Enabled(t.Context(), slog.LevelDebug) {
+		t.Fatal("debug level is enabled")
+	}
+	if !logger.Enabled(t.Context(), slog.LevelInfo) {
+		t.Fatal("info level is disabled")
+	}
 }
 
 func TestRuntimeMetricsReadable(t *testing.T) {

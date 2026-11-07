@@ -19,7 +19,7 @@ func TestPutIsIdempotentUntilExpiry(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if a != b {
+	if a != b || a != "1" {
 		t.Fatalf("codes %s %s", a, b)
 	}
 	got, err := s.Resolve(a)
@@ -28,7 +28,7 @@ func TestPutIsIdempotentUntilExpiry(t *testing.T) {
 	}
 
 	other, err := s.Put("https://example.com/b")
-	if err != nil || other == a {
+	if err != nil || other != "2" {
 		t.Fatalf("other %s %v", other, err)
 	}
 

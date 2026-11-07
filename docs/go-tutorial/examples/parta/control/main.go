@@ -37,4 +37,35 @@ func main() {
 	default:
 		fmt.Println("other")
 	}
+
+	// 没有操作数时，每个 case 是一个条件，从上到下试到第一个为真的。
+	cmd := "sum"
+	switch {
+	case cmd == "sum":
+		fmt.Println("cmd=sum")
+	default:
+		fmt.Println("cmd=other")
+	}
+
+	// fallthrough 只跳到下一个 case 的语句，不会重新判断那个 case 的值。
+	switch n {
+	case 2, 3:
+		fmt.Print("fall=")
+		fallthrough
+	default:
+		fmt.Println("through")
+	}
+
+	// break 带标签时离开的是那一层循环，而不是离它最近的一层。
+	found := false
+outer:
+	for a := 0; a < 3; a++ {
+		for b := 0; b < 3; b++ {
+			if a == 1 && b == 1 {
+				found = true
+				break outer
+			}
+		}
+	}
+	fmt.Printf("brokeOuter=%t\n", found)
 }
