@@ -1,5 +1,7 @@
-// Package generics 演示类型参数、约束，以及 Go 1.27 的泛型方法。
+// Package generics 演示类型参数、约束、Go 1.23 的迭代器，以及 Go 1.27 的泛型方法。
 package generics
+
+import "iter"
 
 // Set 是一个集合。元素必须能用 == 比较，所以约束是 comparable。
 type Set[T comparable] struct {
@@ -43,4 +45,16 @@ type Box struct{}
 // Identity 原样返回 v。
 func (Box) Identity[T any](v T) T {
 	return v
+}
+
+// CountDown 从 n 倒数到 1。Go 1.23 起可以 for range 一个 iter.Seq。
+// yield 返回 false 时必须停，并且不能再调用 yield。
+func CountDown(n int) iter.Seq[int] {
+	return func(yield func(int) bool) {
+		for i := n; i > 0; i-- {
+			if !yield(i) {
+				return
+			}
+		}
+	}
 }

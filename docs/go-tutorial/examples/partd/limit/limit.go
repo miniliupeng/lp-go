@@ -1,4 +1,4 @@
-// Package limit 给出两个可测试的小工具：令牌桶和 singleflight。
+// Package limit 给出三个可测试的小工具：令牌桶、带 TTL 的缓存和 singleflight。
 // 生产环境的令牌桶常用 golang.org/x/time/rate。这里把算法写开，方便对照。
 package limit
 
@@ -54,6 +54,58 @@ type call[T any] struct {
 	wg  sync.WaitGroup
 	val T
 	err error
+}
+
+// TTLCache 是带过期时间的进程内缓存。now 由调用方注入。
+// Negative 为 true 的条目表示「这个键确认没有」，用来做很短的负缓存。
+type TTLCache struct {
+	mu  sync.Mutex
+	ttl time.Duration
+	now func() time.Time
+	m   map[string]ttlEntry
+}
+
+type ttlEntry struct {
+	val      string
+	negative bool
+	expires  time.Time
+}
+
+// NewTTLCache 的 ttl 必须为正。
+func NewTTLCache(ttl time.Duration, now func() time.Time) *TTLCache {
+	if ttl <= 0 {
+		panic("limit: ttl must be positive")
+	}
+	if now == nil {
+		now = time.Now
+	}
+	return &TTLCache{ttl: ttl, now: now, m: map[string]ttlEntry{}}
+}
+
+// Set 写入一个正缓存。
+func (c *TTLCache) Set(key, val string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.m[key] = ttlEntry{val: val, expires: c.now().Add(c.ttl)}
+}
+
+// SetNegative 写入一个负缓存。到期前 Get 会报告命中且 negative 为 true。
+func (c *TTLCache) SetNegative(key string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.m[key] = ttlEntry{negative: true, expires: c.now().Add(c.ttl)}
+}
+
+// Get 返回值和是否命中。过期条目视为未命中。
+func (c *TTLCache) Get(key string) (val string, hit bool, negative bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	e, ok := c.m[key]
+	if !ok || !c.now().Before(e.expires) {
+		delete(c.m, key)
+		return "", false, false
+	}
+	return e.val, true, e.negative
 }
 
 // Do 执行 fn。同一个 key 上，fn 还在跑时，后来的调用等待同一次结果。

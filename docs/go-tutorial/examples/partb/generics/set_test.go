@@ -27,6 +27,19 @@ func TestGenericMethod(t *testing.T) {
 	}
 }
 
+func TestCountDownStopsEarly(t *testing.T) {
+	var got []int
+	for n := range CountDown(5) {
+		got = append(got, n)
+		if n == 3 {
+			break
+		}
+	}
+	if len(got) != 3 || got[0] != 5 || got[2] != 3 {
+		t.Fatalf("%v", got)
+	}
+}
+
 func TestPromotedFieldKey(t *testing.T) {
 	type inner struct{ X int }
 	type outer struct{ inner }

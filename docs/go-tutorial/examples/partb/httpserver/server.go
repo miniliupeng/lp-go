@@ -39,6 +39,19 @@ func NewMux() *http.ServeMux {
 	return mux
 }
 
+// WithRequestID 把请求头 X-Request-Id 抄到响应头。没有这个头时写成 none。
+// 中间件的签名是 func(http.Handler) http.Handler，里面再调用 next。
+func WithRequestID(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		id := r.Header.Get("X-Request-Id")
+		if id == "" {
+			id = "none"
+		}
+		w.Header().Set("X-Request-Id", id)
+		next.ServeHTTP(w, r)
+	})
+}
+
 func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)

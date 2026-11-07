@@ -3,6 +3,7 @@ package obs
 import (
 	"bytes"
 	"log/slog"
+	"runtime/metrics"
 	"strings"
 	"testing"
 )
@@ -18,5 +19,19 @@ func TestJSONLogHasLevelAndMessage(t *testing.T) {
 	}
 	if strings.Contains(text, "hidden") {
 		t.Fatalf("debug leaked: %s", text)
+	}
+}
+
+func TestRuntimeMetricsReadable(t *testing.T) {
+	samples := []metrics.Sample{
+		{Name: "/memory/classes/total:bytes"},
+		{Name: "/memory/classes/heap/released:bytes"},
+	}
+	metrics.Read(samples)
+	if samples[0].Value.Kind() == metrics.KindBad || samples[0].Value.Uint64() == 0 {
+		t.Fatalf("total %#v", samples[0].Value)
+	}
+	if samples[1].Value.Kind() == metrics.KindBad {
+		t.Fatalf("released %#v", samples[1].Value)
 	}
 }

@@ -35,6 +35,14 @@ func (Box) Identity[T any](v T) T { return v }
 
 同文件的测试写了 `outer{X: 7}`，其中 `X` 来自嵌入的 `inner`。这是 Go 1.27 的字面量规则，见 [结构体一章](../part-a/06-structs-and-methods.md)。
 
+## 迭代器（Go 1.23）
+
+`iter.Seq[V]` 是 `func(yield func(V) bool)`。`yield` 返回 false 时，迭代器必须停，并且不能再调用 `yield`，否则会 panic。
+
+[CountDown](../examples/partb/generics/set.go) 从 n 倒数到 1。`for n := range CountDown(5)` 在 Go 1.23 及以后可以直接写。`break` 会让 `yield` 返回 false，测试确认只拿到 `5, 4, 3`。
+
+`maps.Keys`、`slices.Values` 这些标准库函数返回的就是迭代器。自己写的时候，不要在 `yield` 返回 false 之后继续发值。
+
 ## 什么时候不要用泛型
 
 一组类型没有共享的算法，只是看起来都有 `Name()`，用接口更直接。泛型适合容器、`Map` / `Filter` 这种算法，以及必须在编译期保住具体类型的地方。
@@ -50,6 +58,7 @@ go test ./docs/go-tutorial/examples/partb/generics -count=1
 - `comparable` 和 `any` 差在哪：前者可以用 `==`，能做 map 键。
 - `~` 的作用：放行底层类型相同的具名类型。
 - 泛型方法能不能塞进接口：不能。
+- `yield` 返回 false 之后还能不能再调用：不能，会 panic。调用方 `break` 就是在要求停止。
 
 ## 练习
 

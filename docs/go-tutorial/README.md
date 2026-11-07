@@ -35,7 +35,7 @@ Part A 不省略安装和第一个程序。Part C 起每章都包含：核心原
 | 文件 | 要点 | 示例 |
 | --- | --- | --- |
 | [part-a/01-setup.md](part-a/01-setup.md) | 安装、`PATH`、`go env`、模块模式、`gofmt` / `gopls` | `examples/parta/hello` |
-| [part-a/02-program-and-syntax.md](part-a/02-program-and-syntax.md) | 包、`main`、声明、短变量、常量、`iota`、零值、格式化 | `examples/parta/syntax` |
+| [part-a/02-program-and-syntax.md](part-a/02-program-and-syntax.md) | 包、`main`、声明、短变量、常量、`iota`、零值、`&^` 与短路 | `examples/parta/syntax`、`examples/parta/ops` |
 | [part-a/03-types.md](part-a/03-types.md) | 基本类型、转换、数组、切片、map、字符串、指针 | `examples/parta/types` |
 | [part-a/04-control-flow.md](part-a/04-control-flow.md) | `if`、`for`、`range`、`switch` | `examples/parta/control` |
 | [part-a/05-functions.md](part-a/05-functions.md) | 多返回值、变参、函数值、闭包、`defer` | `examples/parta/functions` |
@@ -101,7 +101,7 @@ go run ./docs/go-tutorial/examples/parta/wordstat -file docs/go-tutorial/example
 go test -bench=. -benchmem -run=^$ ./docs/go-tutorial/examples/partc/profile
 ```
 
-看逃逸分析（输出措辞可能随编译器小版本变化，测试只检查稳定的 “escapes to heap”）：
+看逃逸分析（Go 1.27.1 对返回参数地址打印 `moved to heap`，更早的编译器常写 `escapes to heap`，测试接受其中一种）：
 
 ```bash
 go build -gcflags=-m -o /dev/null ./docs/go-tutorial/examples/partc/escape
@@ -113,6 +113,7 @@ go build -gcflags=-m -o /dev/null ./docs/go-tutorial/examples/partc/escape
 | --- | --- |
 | `examples/parta/hello` | 第一个程序 |
 | `examples/parta/syntax` | 声明、常量、零值 |
+| `examples/parta/ops` | `&^`、向零截断、短路 |
 | `examples/parta/types` | 切片、map、字符串、指针 |
 | `examples/parta/control` | 分支和循环 |
 | `examples/parta/functions` | 多返回值、变参、闭包、`defer` |

@@ -8,7 +8,28 @@
 - `WithTimeout` / `WithDeadline`：到点后 `ctx.Err()` 是 `context.DeadlineExceeded`。`cancel` 仍然要调用，用来释放定时器资源。
 - `WithCancelCause`（Go 1.20）：取消时可以附带原因，用 `context.Cause(ctx)` 取出。普通的 `ctx.Err()` 仍是 `Canceled`。
 
-取消 context **不会**把正在跑的函数杀掉。函数要自己在循环里看 `ctx.Done()`，或者把 `ctx` 传给 `database/sql`、`net/http` 这类会监听它的 API。
+取消 context **不会**把正在跑的函数杀掉。函数要自己看 `ctx.Err()`，或者把 `ctx` 传给 `database/sql`、`net/http` 这类会监听它的 API。
+
+[RunSteps](../examples/partb/logctx/logctx.go) 每一步先看 `ctx.Err()`。已经取消时它返回 `context.Cause(ctx)`：
+
+- `Cause` 在 context 还没结束时返回 nil。
+- `WithCancelCause` 的 `cancel(err)` 之后，`ctx.Err()` 仍是 `context.Canceled`，`Cause` 返回你传入的 `err`。`cancel(nil)` 时原因就是 `Canceled`。
+- `WithTimeout` 到期后，`Err` 和 `Cause` 都是 `context.DeadlineExceeded`。
+
+不要写成：
+
+```go
+select {
+case <-ctx.Done():
+    return ctx.Err()
+default:
+    // 继续工作
+}
+```
+
+`ctx` 已经取消时，`Done` 和 `default` 都就绪，`select` 会随机选一个，取消可能被丢掉。先用 `ctx.Err()` 判断。
+
+超时测试放在 `testing/synctest` 里：气泡内的 `time.Sleep` 使用假时钟，`WithTimeout` 创建的计时器也属于这个气泡，所以测试不用真的等一秒。
 
 不要把 `context.Background()` 或 `TODO()` 用在已经有请求 context 的处理函数里。入口（`main`、测试、传入的请求）才创建根 context。
 

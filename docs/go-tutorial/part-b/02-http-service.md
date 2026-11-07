@@ -30,6 +30,12 @@ go test ./docs/go-tutorial/examples/partb/httpserver -count=1
 
 先 `Header().Set`，再 `WriteHeader`，再写正文。`WriteHeader` 之后再改头，改动不会生效。`json.NewEncoder(w).Encode` 会在末尾加换行。测试如果比对整段正文，把换行算进去，或者只检查包含 `"hi"`。
 
+## 中间件
+
+中间件的类型是 `func(http.Handler) http.Handler`。它在调用 `next.ServeHTTP` 之前或之后包一层自己的逻辑。
+
+[WithRequestID](../examples/partb/httpserver/server.go) 把请求头 `X-Request-Id` 抄到响应头；没有这个头时写成 `none`。测试用 `httptest.NewRecorder` 和 `NewRequest`，不启动监听端口。响应头要在 `WriteHeader` 之前设好。中间件里先 `w.Header().Set`，再调用 `next`，`next` 里再写状态码，这个顺序是对的。
+
 ## 请求体
 
 生产代码对 body 加大小限制，并在读完后关闭。解码失败返回 400，不要把 `err.Error()` 原样抛给外部用户：里面可能有内部细节。示例为了短，400 的正文是固定的 `bad json`。

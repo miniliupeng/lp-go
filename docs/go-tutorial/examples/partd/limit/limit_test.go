@@ -22,6 +22,29 @@ func TestBucket(t *testing.T) {
 	}
 }
 
+func TestTTLCacheExpires(t *testing.T) {
+	now := time.Unix(0, 0)
+	clock := now
+	c := NewTTLCache(time.Second, func() time.Time { return clock })
+	c.Set("a", "1")
+	val, hit, neg := c.Get("a")
+	if val != "1" || !hit || neg {
+		t.Fatalf("%q %t %t", val, hit, neg)
+	}
+	c.SetNegative("missing")
+	_, hit, neg = c.Get("missing")
+	if !hit || !neg {
+		t.Fatalf("negative hit=%t neg=%t", hit, neg)
+	}
+	clock = now.Add(time.Second)
+	if _, hit, _ = c.Get("a"); hit {
+		t.Fatal("expired positive still hits")
+	}
+	if _, hit, neg = c.Get("missing"); hit || neg {
+		t.Fatal("expired negative still hits")
+	}
+}
+
 func TestSingleflight(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		var g Group[int]

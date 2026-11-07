@@ -16,7 +16,7 @@
 - 错误：非 2xx 或业务失败的比例
 - 耗时：延迟直方图，而不是只报一个平均值
 
-Go 运行时自己的数在 `runtime/metrics`。不要用会 STW 的 `ReadMemStats` 做高频采集。内存上限的公式也在那一组指标里，见 [GC 一章](../part-c/03-gc.md)。
+Go 运行时自己的数在 `runtime/metrics`。`metrics.Read` 按名字填充 `Sample`。名字写错时 `Value.Kind()` 是 `KindBad`。测试读取 `/memory/classes/total:bytes` 和 `/memory/classes/heap/released:bytes`：前者在正常进程里是非零的 `uint64`，两者相减就是 [GC 一章](../part-c/03-gc.md) 里内存上限使用的那组量。同一块 `Sample` 切片可以重复用于下一次 `Read`，但一次 `Read` 还没结束时不能并发读里面的 `Value`。不要用会 STW 的 `ReadMemStats` 做高频采集。
 
 ## 剖析端点
 
